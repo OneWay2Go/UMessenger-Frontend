@@ -1,7 +1,7 @@
 import * as signalR from '@microsoft/signalr';
 import type { Message } from '@/types/api';
 
-const HUB_URL = import.meta.env.VITE_SIGNALR_HUB_URL || 'https://your-api-url.com/chatHub';
+const HUB_URL = import.meta.env.VITE_SIGNALR_HUB_URL || 'https://localhost:7047/hubs/message';
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;

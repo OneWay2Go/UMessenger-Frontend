@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import type { AddUserDTO, LoginResponse, User, Chat, Message, AddMessageDto, AddChatDto, AddChatUserDto } from '@/types/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://your-api-url.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7047';
 
 class ApiClient {
   private client: AxiosInstance;
