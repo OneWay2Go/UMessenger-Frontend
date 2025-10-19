@@ -1,73 +1,166 @@
-# Welcome to your Lovable project
+# ChatFlow - Real-time Messaging App
 
-## Project info
+A modern Telegram-inspired messaging application built with React, TypeScript, and SignalR for real-time communication.
 
-**URL**: https://lovable.dev/projects/3e398f29-aa40-4261-98db-8f3de76d0651
+## Features
 
-## How can I edit this code?
+✨ **Authentication** - Secure login and registration with JWT tokens
+💬 **Real-time Messaging** - Instant message delivery using SignalR
+👥 **Chat Management** - Create and manage private and group chats
+🎨 **Beautiful UI** - Clean, Telegram-inspired design with smooth animations
+📱 **Responsive Design** - Works seamlessly on desktop and mobile
+🔒 **Secure** - Token-based authentication with automatic refresh
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, shadcn/ui
+- **Real-time**: SignalR (@microsoft/signalr)
+- **HTTP Client**: Axios
+- **State Management**: React Context API
+- **Date Formatting**: date-fns
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3e398f29-aa40-4261-98db-8f3de76d0651) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js 16+ and npm
+- A backend API server (see API documentation below)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+1. Clone the repository
+```bash
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. Install dependencies
+```bash
+npm install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. Configure environment variables
+Create a `.env` file in the root directory:
+```env
+VITE_API_BASE_URL=https://your-api-url.com
+VITE_SIGNALR_HUB_URL=https://your-api-url.com/chatHub
+```
+
+4. Start the development server
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## API Configuration
 
-**Use GitHub Codespaces**
+This app uses the APIs defined in `public/swagger.json`. Make sure your backend server implements these endpoints:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Authentication Endpoints
+- `POST /user/register` - Register a new user
+- `POST /user/log-in` - Login and get JWT tokens
+- `POST /user/refresh-token` - Refresh access token
 
-## What technologies are used for this project?
+### Chat Endpoints
+- `GET /chat/get-all` - Get all chats for the user
+- `GET /chat/get-by-id` - Get chat details
+- `POST /chat/add` - Create a new chat
+- `PUT /chat/update` - Update chat information
+- `DELETE /chat/remove` - Delete a chat
 
-This project is built with:
+### Message Endpoints
+- `GET /message/get-all` - Get all messages
+- `GET /message/get-by-id` - Get message details
+- `POST /message/add` - Send a new message
+- `PUT /message/update` - Edit a message
+- `DELETE /message/remove` - Delete a message
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### User Endpoints
+- `GET /user/get-all` - Get all users
+- `GET /user/get-by-id/{id}` - Get user by ID
+- `PUT /user/update/{id}` - Update user profile
 
-## How can I deploy this project?
+## SignalR Configuration
 
-Simply open [Lovable](https://lovable.dev/projects/3e398f29-aa40-4261-98db-8f3de76d0651) and click on Share -> Publish.
+The app uses SignalR for real-time messaging. Your backend should implement a SignalR hub with these methods:
 
-## Can I connect a custom domain to my Lovable project?
+### Client → Server Methods
+- `JoinChat(chatId)` - Join a chat room
+- `LeaveChat(chatId)` - Leave a chat room
+- `SendMessage(chatId, content)` - Send a message to a chat
 
-Yes, you can!
+### Server → Client Methods
+- `ReceiveMessage(message)` - Receive new messages in real-time
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Project Structure
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```
+src/
+├── components/          # React components
+│   ├── ChatSidebar.tsx # Chat list sidebar
+│   ├── ChatWindow.tsx  # Chat message window
+│   └── ProtectedRoute.tsx # Auth guard
+├── contexts/           # React contexts
+│   └── AuthContext.tsx # Authentication context
+├── lib/               # Utilities and services
+│   ├── api.ts         # API client
+│   └── signalr.ts     # SignalR service
+├── pages/             # Page components
+│   ├── Chat.tsx       # Main chat page
+│   ├── Login.tsx      # Login page
+│   └── Register.tsx   # Registration page
+├── types/             # TypeScript types
+│   └── api.ts         # API type definitions
+└── App.tsx            # Main app component
+```
+
+## Design System
+
+The app uses a custom design system inspired by Telegram:
+
+- **Primary Color**: Telegram Blue (HSL: 199, 100%, 40%)
+- **Clean Typography**: System fonts with clear hierarchy
+- **Smooth Animations**: Subtle transitions for better UX
+- **Semantic Tokens**: All colors defined in CSS variables
+
+## Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+### Code Style
+
+- TypeScript for type safety
+- Functional components with hooks
+- Semantic HTML and accessibility
+- Tailwind CSS for styling (using design system tokens)
+
+## Deployment
+
+1. Build the project:
+```bash
+npm run build
+```
+
+2. Deploy the `dist` folder to your hosting provider
+
+Or simply use Lovable's one-click deployment:
+- Click the "Publish" button in the top right of the Lovable editor
+
+## API Reference
+
+For complete API documentation, see the Swagger specification in `public/swagger.json`
+
+## License
+
+This project is built with Lovable.
+
+## Support
+
+For issues or questions, please open an issue in the repository.
