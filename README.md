@@ -91,4 +91,4 @@ UMessenger-Frontend/
 
 ## API Reference
 
-The frontend communicates with a backend API for user authentication, chat management, and messaging. The complete API specification is defined in the `public/swagger.json` file.
+The frontend communicates with a backend API for user authentication, chat management, and messaging. The complete API specification is defined in the [UMessenger](https://github.com/OneWay2Go/UMessenger) repository.
