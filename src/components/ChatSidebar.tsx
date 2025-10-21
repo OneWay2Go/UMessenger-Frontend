@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { MessageCircle, Plus, Search, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
+import { NewChatDialog } from '@/components/NewChatDialog';
 
 interface ChatSidebarProps {
   selectedChatId: number | null;
@@ -152,10 +153,7 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
 
       {/* New Chat Button */}
       <div className="p-4 border-t border-border">
-        <Button className="w-full" size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          New Chat
-        </Button>
+        <NewChatDialog onChatCreated={loadChats} />
       </div>
     </div>
   );

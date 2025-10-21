@@ -19,9 +19,11 @@ class SignalRService {
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(HUB_URL, {
         accessTokenFactory: async () => {
-          console.log('SignalR: accessTokenFactory called.');
-          let token = await apiClient.refreshAccessToken(); // Always try to get a fresh token
-          console.log('SignalR: Returning token (first 10 chars):', token ? token.substring(0, 10) : 'absent');
+          let token = localStorage.getItem('token');
+          if (token) {
+            return token;
+          }
+          token = await apiClient.refreshAuthToken();
           return token || '';
         },
       })

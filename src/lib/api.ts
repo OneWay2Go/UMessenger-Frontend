@@ -30,26 +30,39 @@ class ApiClient {
         const originalRequest = error.config;
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
-          const refreshToken = localStorage.getItem('refreshToken');
-          if (refreshToken) {
-            try {
-              const { data } = await this.client.post('/user/refresh-token', null, {
-                headers: { refreshToken },
-              });
-              localStorage.setItem('token', data.accessToken);
-              localStorage.setItem('refreshToken', data.refreshToken);
-              originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+          try {
+            const newAccessToken = await this.refreshAuthToken();
+            if (newAccessToken) {
+              originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
               return this.client(originalRequest);
-            } catch (err) {
-              localStorage.removeItem('token');
-              localStorage.removeItem('refreshToken');
-              window.location.href = '/login';
             }
+          } catch (err) {
+            window.location.href = '/login';
           }
         }
         return Promise.reject(error);
       }
     );
+  }
+
+  async refreshAuthToken(): Promise<string | null> {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      return null;
+    }
+
+    try {
+      const { data } = await this.client.post('/user/refresh-token', null, {
+        headers: { refreshToken },
+      });
+      localStorage.setItem('token', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      return data.accessToken;
+    } catch (err) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      throw err;
+    }
   }
 
   // Auth
@@ -58,34 +71,18 @@ class ApiClient {
   }
 
   async login(data: AddUserDTO) {
-    return this.client.post<LoginResponse>('/user/log-in', data);
+    const response = await this.client.post<LoginResponse>('/user/log-in', data);
+    if (response.data.accessToken && response.data.refreshToken) {
+      localStorage.setItem('token', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+    }
+    return response;
   }
 
-  async refreshAccessToken(): Promise<string | null> {
-    console.log('API: refreshAccessToken called.');
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) {
-      console.log('API: No refresh token found.');
-      return null;
-    }
-
-    try {
-      console.log('API: Attempting to refresh token with:', refreshToken);
-      const { data } = await this.client.post('/user/refresh-token', null, {
-        headers: { refreshToken },
-      });
-      localStorage.setItem('token', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      console.log('API: Token refreshed successfully. New access token present:', data.accessToken ? 'yes' : 'no');
-      return data.accessToken;
-    } catch (err) {
-      console.error('API: Token refresh failed:', err);
-      // If refresh fails, clear tokens and redirect to login
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      window.location.href = '/login';
-      return null;
-    }
+  logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    window.location.href = '/login';
   }
 
   // Users
@@ -99,6 +96,10 @@ class ApiClient {
 
   async updateUser(id: number, data: Partial<User>) {
     return this.client.put<User>(`/user/update/${id}`, data);
+  }
+
+  async searchUsers(query: string) {
+    return this.client.get<User[]>(`/user/search?query=${query}`);
   }
 
   // Chats
