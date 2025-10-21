@@ -36,8 +36,9 @@ class ApiClient {
               const { data } = await this.client.post('/user/refresh-token', null, {
                 headers: { refreshToken },
               });
-              localStorage.setItem('token', data.token);
-              originalRequest.headers.Authorization = `Bearer ${data.token}`;
+              localStorage.setItem('token', data.accessToken);
+              localStorage.setItem('refreshToken', data.refreshToken);
+              originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
               return this.client(originalRequest);
             } catch (err) {
               localStorage.removeItem('token');
@@ -58,6 +59,33 @@ class ApiClient {
 
   async login(data: AddUserDTO) {
     return this.client.post<LoginResponse>('/user/log-in', data);
+  }
+
+  async refreshAccessToken(): Promise<string | null> {
+    console.log('API: refreshAccessToken called.');
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      console.log('API: No refresh token found.');
+      return null;
+    }
+
+    try {
+      console.log('API: Attempting to refresh token with:', refreshToken);
+      const { data } = await this.client.post('/user/refresh-token', null, {
+        headers: { refreshToken },
+      });
+      localStorage.setItem('token', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      console.log('API: Token refreshed successfully. New access token present:', data.accessToken ? 'yes' : 'no');
+      return data.accessToken;
+    } catch (err) {
+      console.error('API: Token refresh failed:', err);
+      // If refresh fails, clear tokens and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/login';
+      return null;
+    }
   }
 
   // Users
@@ -110,6 +138,10 @@ class ApiClient {
 
   async getMessageById(id: number) {
     return this.client.get<Message>(`/message/get-by-id?id=${id}`);
+  }
+
+  async getMessagesByChatId(chatId: number) {
+    return this.client.get<Message[]>(`/message/get-by-chat/${chatId}`);
   }
 
   async addMessage(data: AddMessageDto) {

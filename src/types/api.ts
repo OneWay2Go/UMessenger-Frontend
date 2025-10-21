@@ -30,7 +30,7 @@ export interface Message {
   isAttachment: boolean;
   senderId: number;
   chatId: number;
-  createdAt: string;
+  sentAt: string;
   sender?: User;
 }
 
@@ -40,7 +40,7 @@ export interface AddUserDTO {
 }
 
 export interface LoginResponse {
-  token: string;
+  accessToken: string;
   refreshToken: string;
   user: User;
 }

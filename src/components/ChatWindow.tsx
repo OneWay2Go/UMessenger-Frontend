@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/lib/api';
 import { signalRService } from '@/lib/signalr';
-import type { Chat, Message } from '@/types/api';
+import type { Chat, Message, AddMessageDto } from '@/types/api';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,19 +26,42 @@ const ChatWindow = ({ chatId }: ChatWindowProps) => {
   useEffect(() => {
     loadChat();
     loadMessages();
-    signalRService.joinChat(chatId);
 
-    const unsubscribe = signalRService.onMessage((message) => {
-      if (message.chatId === chatId) {
-        setMessages((prev) => [...prev, message]);
+    let unsubscribe: () => void;
+    const connectToChatGroup = async () => {
+      try {
+        await signalRService.addToGroup(chatId.toString());
+        unsubscribe = signalRService.onMessage((message) => {
+          if (message.chatId === chatId) {
+            setMessages((prev) => [...prev, message]);
+          }
+        });
+      } catch (error) {
+        console.error("Failed to join chat group:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Chat Connection Error',
+          description: 'Could not connect to chat. Please try again.',
+        });
       }
-    });
+    };
+
+    connectToChatGroup();
 
     return () => {
-      signalRService.leaveChat(chatId);
-      unsubscribe();
+      const leaveGroup = async () => {
+        try {
+          await signalRService.removeFromGroup(chatId.toString());
+        } catch (error) {
+          console.error("Failed to leave chat group:", error);
+        }
+      };
+      leaveGroup();
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
-  }, [chatId]);
+  }, [chatId, toast]);
 
   useEffect(() => {
     scrollToBottom();
@@ -55,9 +78,8 @@ const ChatWindow = ({ chatId }: ChatWindowProps) => {
 
   const loadMessages = async () => {
     try {
-      const { data } = await apiClient.getAllMessages();
-      const chatMessages = data.filter((msg) => msg.chatId === chatId);
-      setMessages(chatMessages);
+      const { data } = await apiClient.getMessagesByChatId(chatId);
+      setMessages(data);
     } catch (error) {
       console.error('Failed to load messages:', error);
     }
@@ -71,24 +93,15 @@ const ChatWindow = ({ chatId }: ChatWindowProps) => {
     e.preventDefault();
     if (!newMessage.trim() || !user) return;
 
-    setIsLoading(true);
-    try {
-      await apiClient.addMessage({
-        content: newMessage,
-        isAttachment: false,
-        senderId: user.id,
-        chatId,
-      });
-      setNewMessage('');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to send message',
-        description: error.response?.data?.message || 'Please try again',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    const messageDto: AddMessageDto = {
+      content: newMessage,
+      isAttachment: false,
+      senderId: user.id,
+      chatId,
+    };
+
+    await signalRService.sendMessage(messageDto);
+    setNewMessage('');
   };
 
   const getInitials = (name: string) => {
@@ -138,6 +151,7 @@ const ChatWindow = ({ chatId }: ChatWindowProps) => {
           </div>
         ) : (
           messages.map((message) => {
+            // console.log(message); // Removed
             const isOwnMessage = message.senderId === user?.id;
             return (
               <div
@@ -153,7 +167,7 @@ const ChatWindow = ({ chatId }: ChatWindowProps) => {
                 >
                   <p className="text-sm break-words">{message.content}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {format(new Date(message.createdAt), 'HH:mm')}
+                    {format(new Date(message.sentAt), 'HH:mm')}
                   </p>
                 </div>
               </div>
@@ -172,7 +186,9 @@ const ChatWindow = ({ chatId }: ChatWindowProps) => {
           <Input
             placeholder="Type a message..."
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+            }}
             disabled={isLoading}
             className="flex-1"
           />

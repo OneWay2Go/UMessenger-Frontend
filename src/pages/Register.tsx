@@ -33,7 +33,11 @@ const Register = () => {
 
     try {
       await register({ email, password });
-      navigate('/');
+      toast({
+        title: 'Registration Successful',
+        description: 'Please log in to continue.',
+      });
+      navigate('/login');
     } catch (error: any) {
       toast({
         variant: 'destructive',

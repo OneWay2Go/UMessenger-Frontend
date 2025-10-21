@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api';
-import type { Chat } from '@/types/api';
+import { signalRService } from '@/lib/signalr';
+import type { Chat, Message } from '@/types/api';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,10 +18,6 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const { user, logout } = useAuth();
-
-  useEffect(() => {
-    loadChats();
-  }, []);
 
   const loadChats = async () => {
     try {
@@ -43,6 +40,37 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  useEffect(() => {
+    loadChats();
+
+    const handleNewMessage = (message: Message) => {
+      setChats((prevChats) => {
+        const chatIndex = prevChats.findIndex((c) => c.id === message.chatId);
+        if (chatIndex === -1) {
+          return prevChats;
+        }
+
+        const updatedChat = {
+          ...prevChats[chatIndex],
+          lastMessage: message,
+          unreadCount:
+            prevChats[chatIndex].id === selectedChatId
+              ? 0
+              : (prevChats[chatIndex].unreadCount || 0) + 1,
+        };
+
+        const otherChats = prevChats.filter((c) => c.id !== message.chatId);
+        return [updatedChat, ...otherChats];
+      });
+    };
+
+    const unsubscribe = signalRService.onMessage(handleNewMessage);
+
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedChatId]);
 
   return (
     <div className="w-80 bg-chat-sidebar border-r border-border flex flex-col h-screen">
@@ -102,7 +130,7 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
                   <h3 className="font-semibold text-sm truncate">{chat.name}</h3>
                   {chat.lastMessage && (
                     <span className="text-xs text-muted-foreground">
-                      {format(new Date(chat.lastMessage.createdAt), 'HH:mm')}
+                      {format(new Date(chat.lastMessage.sentAt), 'HH:mm')}
                     </span>
                   )}
                 </div>
