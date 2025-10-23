@@ -1,23 +1,26 @@
 import { useEffect, useState } from 'react';
+import React from 'react';
 import { apiClient } from '@/lib/api';
 import { signalRService } from '@/lib/signalr';
-import type { Chat, Message } from '@/types/api';
+import type { Chat, Message, GlobalSearchResponse, User } from '@/types/api';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, Plus, Search, LogOut } from 'lucide-react';
+import { MessageCircle, Search, LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { NewChatDialog } from '@/components/NewChatDialog';
 
 interface ChatSidebarProps {
   selectedChatId: number | null;
-  onSelectChat: (chatId: number) => void;
+  onSelectChat: (chatId: number, type?: 'user' | 'chat', userId?: number) => void;
 }
 
 const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<GlobalSearchResponse | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const { user, logout } = useAuth();
 
   const loadChats = async () => {
@@ -28,10 +31,6 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
       console.error('Failed to load chats:', error);
     }
   };
-
-  const filteredChats = chats.filter((chat) =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const getInitials = (name: string) => {
     return name
@@ -49,6 +48,7 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
       setChats((prevChats) => {
         const chatIndex = prevChats.findIndex((c) => c.id === message.chatId);
         if (chatIndex === -1) {
+          loadChats();
           return prevChats;
         }
 
@@ -73,6 +73,171 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
     };
   }, [selectedChatId]);
 
+  useEffect(() => {
+    if (searchQuery.trim() === '' || searchQuery.trim().length < 3) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const debounceTimer = setTimeout(async () => {
+      try {
+        const { data } = await apiClient.globalSearch(searchQuery);
+        setSearchResults(data);
+      } catch (error) {
+        console.error('Search failed:', error);
+        setSearchResults(null);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
+
+  const handleUserSelect = (selectedUser: User) => {
+    const existingChat = chats.find(chat => 
+      chat.type === 0 && chat.users.some(u => u.id === selectedUser.id)
+    );
+
+    if (existingChat) {
+      onSelectChat(existingChat.id, 'chat');
+    } else {
+      onSelectChat(-1, 'user', selectedUser.id);
+    }
+    setSearchQuery('');
+    setSearchResults(null);
+  }
+
+  const renderSearchResults = () => {
+    if (isSearching) {
+      return <div className="flex justify-center items-center p-6"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+    }
+
+    if (!searchResults || (searchResults.users.length === 0 && searchResults.chats.length === 0 && searchResults.publicGroups.length === 0)) {
+      return <div className="p-6 text-center text-muted-foreground">No results found.</div>;
+    }
+
+    const elements: React.ReactNode[] = [];
+
+    if (searchResults.users.length > 0) {
+      elements.push(<h2 key="users-header" className="p-2 text-sm font-semibold text-muted-foreground">Users</h2>);
+      searchResults.users.forEach(u => {
+        elements.push(
+          <button
+            key={`user-${u.id}`}
+            onClick={() => handleUserSelect(u)}
+            className="w-full p-4 flex items-center gap-3 hover:bg-chat-item-hover transition-colors"
+          >
+            <Avatar className="w-12 h-12 flex-shrink-0">
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                {getInitials(u.username)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 text-left">
+              <h3 className="font-semibold text-sm truncate">{u.username}</h3>
+              <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+            </div>
+          </button>
+        );
+      });
+    }
+
+    if (searchResults.publicGroups.length > 0) {
+        elements.push(<h2 key="groups-header" className="p-2 text-sm font-semibold text-muted-foreground">Public Groups</h2>);
+        searchResults.publicGroups.forEach(chat => {
+          elements.push(
+            <button
+              key={`chat-group-${chat.id}`}
+              onClick={() => onSelectChat(chat.id, 'chat')}
+              className="w-full p-4 flex items-center gap-3 hover:bg-chat-item-hover transition-colors"
+            >
+               <Avatar className="w-12 h-12 flex-shrink-0">
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                  {getInitials(chat.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0 text-left">
+                <h3 className="font-semibold text-sm truncate">{chat.name}</h3>
+              </div>
+            </button>
+          );
+        });
+      }
+
+      if (searchResults.chats.length > 0) {
+        elements.push(<h2 key="chats-header" className="p-2 text-sm font-semibold text-muted-foreground">Chats</h2>);
+        searchResults.chats.forEach(chat => {
+          elements.push(
+            <button
+              key={`chat-${chat.id}`}
+              onClick={() => onSelectChat(chat.id, 'chat')}
+              className={`w-full p-4 flex items-start gap-3 hover:bg-chat-item-hover transition-colors border-b border-border/50 ${
+                selectedChatId === chat.id ? 'bg-chat-item-active' : ''
+              }`}>
+               <Avatar className="w-12 h-12 flex-shrink-0">
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                  {getInitials(chat.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0 text-left">
+                <h3 className="font-semibold text-sm truncate">{chat.name}</h3>
+              </div>
+            </button>
+          );
+        });
+      }
+
+    return <>{elements}</>;
+  };
+
+  const renderChatList = () => (
+    chats.length === 0 ? (
+      <div className="flex flex-col items-center justify-center h-full text-center p-6">
+        <MessageCircle className="w-12 h-12 text-muted-foreground mb-3 opacity-50" />
+        <p className="text-muted-foreground">No chats yet</p>
+        <p className="text-sm text-muted-foreground mt-1">Start a conversation</p>
+      </div>
+    ) : (
+      chats.map((chat) => (
+        <button
+          key={chat.id}
+          onClick={() => onSelectChat(chat.id, 'chat')}
+          className={`w-full p-4 flex items-start gap-3 hover:bg-chat-item-hover transition-colors border-b border-border/50 ${
+            selectedChatId === chat.id ? 'bg-chat-item-active' : ''
+          }`}
+        >
+          <Avatar className="w-12 h-12 flex-shrink-0">
+            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+              {getInitials(chat.name)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0 text-left">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-semibold text-sm truncate">{chat.name}</h3>
+              {chat.lastMessage && (
+                <span className="text-xs text-muted-foreground">
+                  {format(new Date(chat.lastMessage.sentAt), 'HH:mm')}
+                </span>
+              )}
+            </div>
+            {chat.lastMessage && (
+              <p className="text-sm text-muted-foreground truncate">
+                {chat.lastMessage.content}
+              </p>
+            )}
+            {chat.unreadCount && chat.unreadCount > 0 && (
+              <span className="inline-block mt-1 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full font-medium">
+                {chat.unreadCount}
+              </span>
+            )}
+          </div>
+        </button>
+      ))
+    )
+  );
+
   return (
     <div className="w-80 bg-chat-sidebar border-r border-border flex flex-col h-screen">
       {/* Header */}
@@ -96,7 +261,7 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search chats..."
+            placeholder="Search users, groups, or chats..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -104,51 +269,9 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
         </div>
       </div>
 
-      {/* Chat List */}
+      {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {filteredChats.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-6">
-            <MessageCircle className="w-12 h-12 text-muted-foreground mb-3 opacity-50" />
-            <p className="text-muted-foreground">No chats yet</p>
-            <p className="text-sm text-muted-foreground mt-1">Start a conversation</p>
-          </div>
-        ) : (
-          filteredChats.map((chat) => (
-            <button
-              key={chat.id}
-              onClick={() => onSelectChat(chat.id)}
-              className={`w-full p-4 flex items-start gap-3 hover:bg-chat-item-hover transition-colors border-b border-border/50 ${
-                selectedChatId === chat.id ? 'bg-chat-item-active' : ''
-              }`}
-            >
-              <Avatar className="w-12 h-12 flex-shrink-0">
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {getInitials(chat.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 text-left">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-semibold text-sm truncate">{chat.name}</h3>
-                  {chat.lastMessage && (
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(chat.lastMessage.sentAt), 'HH:mm')}
-                    </span>
-                  )}
-                </div>
-                {chat.lastMessage && (
-                  <p className="text-sm text-muted-foreground truncate">
-                    {chat.lastMessage.content}
-                  </p>
-                )}
-                {chat.unreadCount && chat.unreadCount > 0 && (
-                  <span className="inline-block mt-1 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full font-medium">
-                    {chat.unreadCount}
-                  </span>
-                )}
-              </div>
-            </button>
-          ))
-        )}
+        {searchQuery.trim().length > 2 ? renderSearchResults() : renderChatList()}
       </div>
 
       {/* New Chat Button */}

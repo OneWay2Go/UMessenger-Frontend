@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import type { AddUserDTO, LoginResponse, User, Chat, Message, AddMessageDto, AddChatDto, AddChatUserDto } from '@/types/api';
+import type { AddUserDTO, LoginResponse, User, Chat, Message, AddMessageDto, AddChatDto, AddChatUserDto, GlobalSearchResponse, UpdateMessageDto } from '@/types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7047';
 
@@ -85,6 +85,11 @@ class ApiClient {
     window.location.href = '/login';
   }
 
+  // Search
+  async globalSearch(query: string) {
+    return this.client.get<GlobalSearchResponse>(`/chat/global-search?searchText=${query}`);
+  }
+
   // Users
   async getAllUsers() {
     return this.client.get<User[]>('/user/get-all');
@@ -109,6 +114,10 @@ class ApiClient {
 
   async getChatById(id: number) {
     return this.client.get<Chat>(`/chat/get-by-id?id=${id}`);
+  }
+
+  async getOrCreateOneOnOneChat(secondUserId: number) {
+    return this.client.get<Chat>(`/chat/one-on-one?secondUserId=${secondUserId}`);
   }
 
   async addChat(data: AddChatDto) {
@@ -149,12 +158,12 @@ class ApiClient {
     return this.client.post<Message>('/message/add', data);
   }
 
-  async updateMessage(id: number, content: string) {
-    return this.client.put('/message/update', { id, content });
+  async updateMessage(data: UpdateMessageDto) {
+    return this.client.put('/message/update-user-check', data);
   }
 
   async removeMessage(id: number) {
-    return this.client.delete(`/message/remove?id=${id}`);
+    return this.client.delete(`/message/remove-user-check?id=${id}`);
   }
 }
 

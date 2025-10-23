@@ -2,15 +2,29 @@ import { useState } from 'react';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatWindow from '@/components/ChatWindow';
 import { MessageCircle } from 'lucide-react';
+import { apiClient } from '@/lib/api';
 
 const Chat = () => {
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
 
+  const handleSelectChat = async (chatId: number, type: 'user' | 'chat' = 'chat', secondUserId?: number) => {
+    if (type === 'user' && secondUserId) {
+      try {
+        const { data: newChat } = await apiClient.getOrCreateOneOnOneChat(secondUserId);
+        setSelectedChatId(newChat.id);
+      } catch (error) {
+        console.error('Failed to create or get one-on-one chat:', error);
+      }
+    } else {
+      setSelectedChatId(chatId);
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
-      <ChatSidebar selectedChatId={selectedChatId} onSelectChat={setSelectedChatId} />
+      <ChatSidebar selectedChatId={selectedChatId} onSelectChat={handleSelectChat} />
       {selectedChatId ? (
-        <ChatWindow chatId={selectedChatId} />
+        <ChatWindow key={selectedChatId} chatId={selectedChatId} />
       ) : (
         <div className="flex-1 flex items-center justify-center bg-chat-bg">
           <div className="text-center">

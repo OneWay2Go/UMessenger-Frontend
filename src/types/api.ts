@@ -1,7 +1,7 @@
 export interface User {
   id: number;
   email: string;
-  username?: string;
+  username: string;
   displayName?: string;
   bio?: string;
   profileImageUrl?: string;
@@ -10,14 +10,20 @@ export interface User {
 export interface Chat {
   id: number;
   name: string;
-  chatType: ChatType;
+  type: ChatType;
   lastMessage?: Message;
   unreadCount?: number;
+  users: User[];
+  chatImageUrl?: string;
+  currentUserRole?: string;
 }
 
 export enum ChatType {
   Private = 0,
-  Group = 1,
+  PrivateGroup = 1,
+  PrivateChannel = 2,
+  PublicGroup = 3,
+  PublicChannel = 4,
 }
 
 export interface Message {
@@ -32,6 +38,13 @@ export interface Message {
   chatId: number;
   sentAt: string;
   sender?: User;
+  isDeleted?: boolean;
+}
+
+export interface GlobalSearchResponse {
+  users: User[];
+  chats: Chat[];
+  publicGroups: Chat[];
 }
 
 export interface AddUserDTO {
@@ -54,6 +67,11 @@ export interface AddMessageDto {
   isAttachment: boolean;
   senderId: number;
   chatId: number;
+}
+
+export interface UpdateMessageDto {
+    id: number;
+    content: string;
 }
 
 export interface AddChatDto {

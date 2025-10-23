@@ -7,6 +7,8 @@ const HUB_URL = import.meta.env.VITE_SIGNALR_HUB_URL || 'https://localhost:7047/
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
   private messageCallbacks: ((message: Message) => void)[] = [];
+  private messageEditedCallbacks: ((messageId: number, newContent: string) => void)[] = [];
+  private messageDeletedCallbacks: ((chatId: number, messageId: number) => void)[] = [];
   private connectionPromise: Promise<void> | null = null;
 
   start(): Promise<void> {
@@ -14,8 +16,6 @@ class SignalRService {
       return this.connectionPromise;
     }
 
-    const token = localStorage.getItem('token');
-    
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(HUB_URL, {
         accessTokenFactory: async () => {
@@ -32,6 +32,14 @@ class SignalRService {
 
     this.connection.on('ReceiveMessage', (message: Message) => {
       this.messageCallbacks.forEach((callback) => callback(message));
+    });
+
+    this.connection.on('OnMessageEdited', (messageId: number, newContent: string) => {
+      this.messageEditedCallbacks.forEach((callback) => callback(messageId, newContent));
+    });
+
+    this.connection.on('OnMessageDeleted', (chatId: number, messageId: number) => {
+      this.messageDeletedCallbacks.forEach((callback) => callback(chatId, messageId));
     });
 
     this.connectionPromise = this.connection.start()
@@ -87,6 +95,20 @@ class SignalRService {
     this.messageCallbacks.push(callback);
     return () => {
       this.messageCallbacks = this.messageCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
+  onMessageEdited(callback: (messageId: number, newContent: string) => void) {
+    this.messageEditedCallbacks.push(callback);
+    return () => {
+      this.messageEditedCallbacks = this.messageEditedCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
+  onMessageDeleted(callback: (chatId: number, messageId: number) => void) {
+    this.messageDeletedCallbacks.push(callback);
+    return () => {
+      this.messageDeletedCallbacks = this.messageDeletedCallbacks.filter((cb) => cb !== callback);
     };
   }
 }
