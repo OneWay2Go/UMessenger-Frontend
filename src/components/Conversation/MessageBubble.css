@@ -1,0 +1,275 @@
+.message-bubble {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  padding: 0 16px;
+}
+
+.message-bubble.own {
+  align-items: flex-end;
+}
+
+.message-bubble.other {
+  align-items: flex-start;
+}
+
+.message-sender {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  padding: 0 4px;
+}
+
+.message-content-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 70%;
+}
+
+.message-actions {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.message-action-button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.message-bubble:hover .message-action-button {
+  opacity: 1;
+}
+
+.message-action-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.message-menu {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  margin-right: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  min-width: 120px;
+}
+
+.message-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.message-menu-item:hover {
+  background: var(--bg-hover);
+}
+
+.message-content {
+  flex: 1;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  padding: 10px 14px;
+  position: relative;
+}
+
+.message-content.deleted {
+  opacity: 0.6;
+}
+
+.message-bubble.own .message-content {
+  background: var(--accent-purple);
+  color: white;
+}
+
+.message-text {
+  word-wrap: break-word;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.message-bubble.own .message-text {
+  color: white;
+}
+
+.message-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  text-align: right;
+}
+
+.message-bubble.own .message-time {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.message-attachment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachment-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.attachment-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.attachment-icon {
+  font-size: 24px;
+}
+
+.attachment-info {
+  flex: 1;
+}
+
+.attachment-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.attachment-size {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.attachment-caption {
+  margin-top: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.youtube-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.youtube-link {
+  color: var(--accent-purple);
+  text-decoration: none;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.youtube-link:hover {
+  text-decoration: underline;
+}
+
+.youtube-card {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.youtube-header {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.youtube-title {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.youtube-thumbnail {
+  width: 100%;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.message-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.message-edit-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+}
+
+.message-edit-input:focus {
+  border-color: var(--accent-purple);
+}
+
+.message-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.message-edit-button {
+  padding: 6px 12px;
+  background: var(--accent-purple);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s;
+}
+
+.message-edit-button:hover {
+  background: var(--accent-purple-hover);
+}
+
+.message-edit-button:last-child {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.message-edit-button:last-child:hover {
+  background: var(--bg-hover);
+}
+

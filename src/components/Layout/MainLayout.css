@@ -1,0 +1,37 @@
+.main-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.chat-list-panel {
+  width: 400px;
+  min-width: 300px;
+  max-width: 500px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.conversation-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .chat-list-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .conversation-panel {
+    display: none;
+  }
+}
+
