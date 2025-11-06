@@ -41,6 +41,9 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
       .slice(0, 2);
   };
 
+  const selectedChatIdRef = React.useRef(selectedChatId);
+  selectedChatIdRef.current = selectedChatId;
+
   useEffect(() => {
     loadChats();
 
@@ -56,7 +59,7 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
           ...prevChats[chatIndex],
           lastMessage: message,
           unreadCount:
-            prevChats[chatIndex].id === selectedChatId
+            prevChats[chatIndex].id === selectedChatIdRef.current
               ? 0
               : (prevChats[chatIndex].unreadCount || 0) + 1,
         };
@@ -71,7 +74,7 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
     return () => {
       unsubscribe();
     };
-  }, [selectedChatId]);
+  }, []);
 
   useEffect(() => {
     if (searchQuery.trim() === '' || searchQuery.trim().length < 3) {
@@ -203,7 +206,7 @@ const ChatSidebar = ({ selectedChatId, onSelectChat }: ChatSidebarProps) => {
       chats.map((chat) => (
         <button
           key={chat.id}
-          onClick={() => onSelectChat(chat.id, 'chat')}
+          onClick={() => onSelectChat(chat.id)}
           className={`w-full p-4 flex items-start gap-3 hover:bg-chat-item-hover transition-colors border-b border-border/50 ${
             selectedChatId === chat.id ? 'bg-chat-item-active' : ''
           }`}

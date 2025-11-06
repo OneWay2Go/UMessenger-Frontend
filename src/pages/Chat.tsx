@@ -8,6 +8,7 @@ const Chat = () => {
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
 
   const handleSelectChat = async (chatId: number, type: 'user' | 'chat' = 'chat', secondUserId?: number) => {
+    console.log('Selected chat ID:', chatId);
     if (type === 'user' && secondUserId) {
       try {
         const { data: newChat } = await apiClient.getOrCreateOneOnOneChat(secondUserId);

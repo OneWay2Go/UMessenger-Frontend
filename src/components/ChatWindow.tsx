@@ -52,6 +52,7 @@ const ChatWindow = ({ chatId }: ChatWindowProps) => {
     };
 
     loadDataAndConnect();
+    console.log('ChatWindow props:', { chatId });
 
     const setupSignalR = () => {
       signalRService.addToGroup(chatId.toString());

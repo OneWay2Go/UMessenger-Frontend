@@ -38,7 +38,7 @@ const Register = () => {
         description: 'Please log in to continue.',
       });
       navigate('/login');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: 'destructive',
         title: 'Registration Failed',
