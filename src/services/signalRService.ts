@@ -2,7 +2,7 @@ import * as signalR from '@microsoft/signalr';
 import type { AddMessageDto } from '../types/message';
 import type { Message } from '../types/message';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7047';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://umessenger.onrender.com';
 const HUB_URL = `${API_BASE_URL}/hubs/message`;
 
 class SignalRService {
