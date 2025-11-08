@@ -26,7 +26,7 @@ export interface AddMessageDto {
   fileSize?: number;
   fileType?: string;
   isAttachment: boolean;
-  senderId: number;
+  userId: number;
   chatId: number;
 }
 

@@ -52,7 +52,7 @@ export const MessageInput: React.FC = () => {
     
     const messageDto: AddMessageDto = {
       content: messageContent,
-      senderId: user.id,
+      userId: user.id,
       chatId: selectedChat.id,
       isAttachment: false,
     };
