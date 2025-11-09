@@ -8,10 +8,11 @@ interface ChatItemProps {
   avatarUrl?: string;
   lastMessage: string;
   isActive: boolean;
-  onClick: () => void;
+  onClick: (chatId: number) => void;
 }
 
 export const ChatItem: React.FC<ChatItemProps> = ({
+  chat,
   displayName,
   avatarUrl,
   lastMessage,
@@ -30,7 +31,7 @@ export const ChatItem: React.FC<ChatItemProps> = ({
   return (
     <div
       className={`chat-item ${isActive ? 'active' : ''}`}
-      onClick={onClick}
+      onClick={() => onClick(chat.id)}
     >
       <div className="chat-item-avatar">
         {avatarUrl ? (

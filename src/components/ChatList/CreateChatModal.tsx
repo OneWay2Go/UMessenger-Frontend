@@ -26,6 +26,17 @@ export const CreateChatModal: React.FC<CreateChatModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
+  const loadUsers = useCallback(async () => {
+    try {
+      const users = await userService.getAll();
+      // Filter out current user
+      const filtered = users.filter((u) => u.id !== user?.id);
+      setAvailableUsers(filtered);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  }, [user?.id]);
+
   React.useEffect(() => {
     if (isOpen) {
       loadUsers();
@@ -35,18 +46,7 @@ export const CreateChatModal: React.FC<CreateChatModalProps> = ({
       setSelectedUsers([]);
       setSearchQuery('');
     }
-  }, [isOpen]);
-
-  const loadUsers = async () => {
-    try {
-      const users = await userService.getAll();
-      // Filter out current user
-      const filtered = users.filter((u) => u.id !== user?.id);
-      setAvailableUsers(filtered);
-    } catch (error) {
-      console.error('Error loading users:', error);
-    }
-  };
+  }, [isOpen, loadUsers]);
 
   const handleUserToggle = (user: User) => {
     setSelectedUsers((prev) => {

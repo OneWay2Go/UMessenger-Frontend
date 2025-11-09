@@ -25,9 +25,39 @@ export const ChatList: React.FC = () => {
   const [isHamburgerMenuOpen, setIsHamburgerMenuOpen] = useState(false);
   const [isCreateChatOpen, setIsCreateChatOpen] = useState(false);
 
+  const loadChats = useCallback(async () => {
+    if (!user) return; // Don't load chats if user is not logged in
+
+    try {
+      setIsLoading(true);
+      const allChats = await chatService.getAll();
+
+      // Filter chats to only include those where the current user is a member
+      const userChats = allChats.filter(chat => 
+        chat.chatUsers.some(chatUser => chatUser.userId === user.id)
+      );
+
+      // Workaround: Backend ChatDto doesn't include Id, so we get it from chatUsers
+      const chatsWithId = userChats.map((chat) => {
+        if (!chat.id && chat.chatUsers && chat.chatUsers.length > 0) {
+          // Find the chatUser entry for the current user to ensure we get a relevant chatId
+          const currentUserChat = chat.chatUsers.find(cu => cu.userId === user.id);
+          return { ...chat, id: currentUserChat?.chatId ?? chat.chatUsers[0].chatId };
+        }
+        return chat;
+      });
+
+      setChats(chatsWithId);
+    } catch (error) {
+      console.error('Error loading chats:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     loadChats();
-  }, []);
+  }, [loadChats]);
 
   useEffect(() => {
     // Load last messages for all chats
@@ -77,26 +107,7 @@ export const ChatList: React.FC = () => {
     return () => {
       signalRService.offReceiveMessage();
     };
-  }, []);
-
-  const loadChats = async () => {
-    try {
-      setIsLoading(true);
-      const allChats = await chatService.getAll();
-      // Workaround: Backend ChatDto doesn't include Id, so we get it from chatUsers
-      const chatsWithId = allChats.map((chat) => {
-        if (!chat.id && chat.chatUsers && chat.chatUsers.length > 0) {
-          return { ...chat, id: chat.chatUsers[0].chatId };
-        }
-        return chat;
-      });
-      setChats(chatsWithId);
-    } catch (error) {
-      console.error('Error loading chats:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [loadChats]);
 
   const filteredChats = chats.filter((chat) =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -219,7 +230,7 @@ export const ChatList: React.FC = () => {
                 avatarUrl={avatarUrl}
                 lastMessage={getLastMessage(chat)}
                 isActive={selectedChat?.id === chat.id}
-                onClick={() => setSelectedChat(chat)}
+                onClick={handleSelectChat}
               />
             );
           })
